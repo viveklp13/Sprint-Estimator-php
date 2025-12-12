@@ -24,13 +24,11 @@
     
     <div id="ontimeModal" class="modal"><div class="modal-content w-full max-w-6xl"><div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Ontime Index Chart</h2><button onclick="closeChartModal('ontimeModal')" class="text-2xl">&times;</button></div><canvas id="ontimeChart"></canvas><div class="mt-4 grid grid-cols-4 gap-4"><div class="bg-blue-50 p-4 rounded"><p class="text-sm font-semibold">Mean</p><p class="text-2xl font-bold" id="ontimeMean">0</p></div>
     <!-- DRE Modal -->
-    <div id="dreModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-8 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div id="dreModal" class="modal">
+        <div class="modal-content w-full max-w-5xl">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold">Mean Defect Removal Efficiency Chart</h2>
-                <button onclick="closeChart('dre')" class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                <button onclick="closeChartModal('dreModal')" class="text-2xl">&times;</button>
             </div>
             <div class="grid grid-cols-4 gap-4 mb-6">
                 <div class="bg-purple-50 p-4 rounded-lg text-center">
@@ -147,7 +145,7 @@
         
         async function deleteFeature(featureId){if(!confirm('Delete feature?'))return;const response=await fetch('api/features.php',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:featureId})});if(response.ok){await loadFeatures(currentProject.id);render()}}
         
-        function showChart(projectId,type){const project=projects.find(p=>p.id===projectId);if(!project)return;let stats,modalId,chartId,prefix;if(type==='productivity'){stats=project.productivityStats;modalId='productivityModal';chartId='productivityChart';prefix='prod'}else if(type==='effortVariance'){stats=project.effortVarianceStats;modalId='effortVarianceModal';chartId='effortChart';prefix='effort'}else if(type==='ontimeIndex'){stats=project.ontimeIndexStats;modalId='ontimeModal';chartId='ontimeChart';prefix='ontime'}else if(type==='dre'){stats=project.dreStats;modalId='dreModal';chartId='dreChart';prefix='dre'}else{return}if(!stats){alert('No statistics data available');return}if(type==='dre'){document.getElementById(modalId).classList.remove('hidden')}else{document.getElementById(modalId).classList.add('active')}document.getElementById(prefix+'Mean').textContent=stats.mean.toFixed(type==='productivity'?4:2)+(type==='productivity'?'':'%');document.getElementById(prefix+'UCL').textContent=stats.ucl.toFixed(type==='productivity'?4:2)+(type==='productivity'?'':'%');document.getElementById(prefix+'LCL').textContent=stats.lcl.toFixed(type==='productivity'?4:2)+(type==='productivity'?'':'%');document.getElementById(prefix+'Count').textContent=type==='dre'?stats.featureCount:stats.features.length;let chartFeatures,labels,values;if(type==='dre'){chartFeatures=stats.features.filter(f=>(f.sitDefects+f.uatDefects)>0);labels=chartFeatures.map(f=>f.name);values=chartFeatures.map(f=>f.defectRemovalEfficiency)}else{chartFeatures=stats.features;labels=chartFeatures.map(f=>f.name);if(type==='productivity'){values=chartFeatures.map(f=>f.productivity)}else if(type==='effortVariance'){values=chartFeatures.map(f=>f.effortVariance)}else if(type==='ontimeIndex'){values=chartFeatures.map(f=>f.ontimeIndex)}}if(values.length===0){alert('No data available for chart');if(type==='dre'){document.getElementById(modalId).classList.add('hidden')}else{document.getElementById(modalId).classList.remove('active')}return}const meanLine=new Array(values.length).fill(stats.mean),uclLine=new Array(values.length).fill(stats.ucl),lclLine=new Array(values.length).fill(stats.lcl);if(charts[chartId])charts[chartId].destroy();const ctx=document.getElementById(chartId).getContext('2d');charts[chartId]=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:'Feature '+type,data:values,borderColor:'rgb(59,130,246)',borderWidth:3,pointRadius:6},{label:'Mean',data:meanLine,borderColor:'rgb(34,197,94)',borderDash:[5,5],pointRadius:0},{label:'UCL',data:uclLine,borderColor:'rgb(239,68,68)',borderDash:[10,5],pointRadius:0},{label:'LCL',data:lclLine,borderColor:'rgb(34,197,94)',borderDash:[10,5],pointRadius:0}]},options:{responsive:true,plugins:{title:{display:true,text:project.name+' - '+type+' Chart'}},scales:{y:{beginAtZero:true}}}})}
+        function showChart(projectId,type){const project=projects.find(p=>p.id===projectId);if(!project)return;let stats,modalId,chartId,prefix;if(type==='productivity'){stats=project.productivityStats;modalId='productivityModal';chartId='productivityChart';prefix='prod'}else if(type==='effortVariance'){stats=project.effortVarianceStats;modalId='effortVarianceModal';chartId='effortChart';prefix='effort'}else if(type==='ontimeIndex'){stats=project.ontimeIndexStats;modalId='ontimeModal';chartId='ontimeChart';prefix='ontime'}else if(type==='dre'){stats=project.dreStats;modalId='dreModal';chartId='dreChart';prefix='dre'}else{return}if(!stats){alert('No statistics data available');return}document.getElementById(modalId).classList.add('active');document.getElementById(prefix+'Mean').textContent=stats.mean.toFixed(type==='productivity'?4:2)+(type==='productivity'?'':'%');document.getElementById(prefix+'UCL').textContent=stats.ucl.toFixed(type==='productivity'?4:2)+(type==='productivity'?'':'%');document.getElementById(prefix+'LCL').textContent=stats.lcl.toFixed(type==='productivity'?4:2)+(type==='productivity'?'':'%');document.getElementById(prefix+'Count').textContent=type==='dre'?stats.featureCount:stats.features.length;let chartFeatures,labels,values;if(type==='dre'){chartFeatures=stats.features.filter(f=>(f.sitDefects+f.uatDefects)>0);labels=chartFeatures.map(f=>f.name);values=chartFeatures.map(f=>f.defectRemovalEfficiency)}else{chartFeatures=stats.features;labels=chartFeatures.map(f=>f.name);if(type==='productivity'){values=chartFeatures.map(f=>f.productivity)}else if(type==='effortVariance'){values=chartFeatures.map(f=>f.effortVariance)}else if(type==='ontimeIndex'){values=chartFeatures.map(f=>f.ontimeIndex)}}if(values.length===0){alert('No data available for chart');document.getElementById(modalId).classList.remove('active');return}const meanLine=new Array(values.length).fill(stats.mean),uclLine=new Array(values.length).fill(stats.ucl),lclLine=new Array(values.length).fill(stats.lcl);if(charts[chartId])charts[chartId].destroy();const ctx=document.getElementById(chartId).getContext('2d');charts[chartId]=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:'Feature '+type,data:values,borderColor:'rgb(59,130,246)',borderWidth:3,pointRadius:6},{label:'Mean',data:meanLine,borderColor:'rgb(34,197,94)',borderDash:[5,5],pointRadius:0},{label:'UCL',data:uclLine,borderColor:'rgb(239,68,68)',borderDash:[10,5],pointRadius:0},{label:'LCL',data:lclLine,borderColor:'rgb(34,197,94)',borderDash:[10,5],pointRadius:0}]},options:{responsive:true,plugins:{title:{display:true,text:project.name+' - '+type+' Chart'}},scales:{y:{beginAtZero:true}}}})}
         function closeChart(chartType) {
             const modalIds = {
                 'productivity': 'productivityModal',
@@ -157,17 +155,7 @@
             };
             const modalId = modalIds[chartType];
             if (modalId) {
-                if (chartType === 'dre') {
-                    document.getElementById(modalId).classList.add('hidden');
-                } else {
-                    document.getElementById(modalId).classList.remove('active');
-                }
-                const chartId = chartType === 'productivity' ? 'productivityChart' : 
-                                chartType === 'effortVariance' ? 'effortChart' : 
-                                chartType === 'ontimeIndex' ? 'ontimeChart' : 'dreChart';
-                if (charts[chartId]) {
-                    charts[chartId].destroy();
-                }
+                closeChartModal(modalId);
             }
         }
         
